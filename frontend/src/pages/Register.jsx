@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { FileText, Eye, EyeOff } from 'lucide-react';
 
 const Register = () => {
+  const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,7 +26,7 @@ const Register = () => {
     }
 
     try {
-      await register(email, password);
+      await register(userName, email, password);
       navigate('/dashboard');
     } catch (error) {
       setError(error.message || 'Failed to create account');
@@ -52,7 +53,22 @@ const Register = () => {
                 <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
               </div>
             )}
-            
+
+            <div>
+              <label htmlFor="userName" className="block text-sm font-medium text-secondary-700 dark:text-primary-200 mb-2">
+                UserName
+              </label>
+              <input
+                id="userName"
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-primary-300 dark:border-secondary-600 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:border-transparent bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+                placeholder="UserName"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-secondary-700 dark:text-primary-200 mb-2">
                 Email address

@@ -168,11 +168,11 @@ const Dashboard = () => {
                         {doc.title}
                       </h3>
                       <div className="flex items-center space-x-2 flex-shrink-0">
-                        {canEdit && (
+                        {/* {canEdit && (
                           <button onClick={() => navigate(`/editor/${doc.id}`)} className="text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-primary-300 transition-colors" title="Edit document">
                             <Edit className="h-4 w-4" />
                           </button>
-                        )}
+                        )} */}
                         {canDelete && (
                            <button onClick={() => setDocToDelete(doc)} className="text-secondary-500 dark:text-secondary-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Delete document">
                             <Trash2 className="h-4 w-4" />

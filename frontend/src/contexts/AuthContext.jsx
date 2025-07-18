@@ -34,8 +34,18 @@ export const AuthProvider = ({ children }) => {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const register = async (email, password) => {
+  const register = async (userName, email, password) => {
     await createUserWithEmailAndPassword(auth, email, password);
+
+    await updateProfile(userCredential.user, {
+          displayName: userName
+    });
+        
+        // Update the local user state to include the display name
+    setUser({
+      ...userCredential.user,
+      displayName: userName
+    });
   };
 
   const logout = async () => {

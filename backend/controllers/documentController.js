@@ -74,6 +74,7 @@ export const createDocument = async (req, res) => {
         [userId]: 'admin',
       },
       members: [userId],
+      createdByName: req.user.name || req.user.email,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
