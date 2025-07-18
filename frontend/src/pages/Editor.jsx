@@ -1,25 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as Y from "yjs";
-import { WebrtcProvider } from "y-webrtc";
 import { useParams, useNavigate } from 'react-router-dom';
-import { documentApi } from '../services/api';
+import { documentApi } from '../services/simple-api';
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
-import { ArrowLeft, Share2, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Share2, CheckCircle, Clock, Loader2, Users, MessageCircle, Highlighter, Edit3 } from 'lucide-react';
 import Layout from '../components/Layout';
 import ShareModal from '../components/ShareModal';
+import CollaborationPanel from '../components/CollaborationPanel';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useCollaboration } from '../hooks/useCollaboration';
+import { useCollaboration as useCollaborationContext } from '../contexts/CollaborationContext';
 import { isEqual } from 'lodash';
-
-// Y.js setup for collaboration
-// const doc = new Y.Doc();
-// // Note: We're using the document ID from the URL params to create a unique room.
-// // This is a basic example. In a real app, you'd want a more robust way to manage room IDs.
-// const provider = new WebrtcProvider(`my-document-id-${window.location.pathname.split('/').pop()}`, doc);
-
 
 // Custom hook for debouncing
 const useDebounce = (value, delay) => {
@@ -36,6 +31,7 @@ const Editor = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { isDark } = useTheme();
+    const { setConnectedUsers } = useCollaborationContext();
 
     // Core State
     const [document, setDocument] = useState(null);
@@ -49,19 +45,36 @@ const Editor = () => {
     const [lastSaved, setLastSaved] = useState(null);
     const [error, setError] = useState('');
     const [isShareModalOpen, setShareModalOpen] = useState(false);
+    const [isCollaborationPanelOpen, setCollaborationPanelOpen] = useState(false);
 
-    // BlockNote Editor Instance
+    // Real-time collaboration
+    const { socket, connectedUsers, yDoc } = useCollaboration(
+        id,
+        user?.uid,
+        user?.displayName || user?.email
+    );
+
+    // Update connected users in context
+    useEffect(() => {
+        setConnectedUsers(connectedUsers);
+    }, [connectedUsers, setConnectedUsers]);
+
+    // BlockNote Editor Instance with Y.js collaboration
     const editor = useCreateBlockNote({
-        // collaboration: {
-        //   provider,
-        //   fragment: doc.getXmlFragment("document-store"),
-        //   user: {
-        //     // You would typically get the user's name from your auth context
-        //     name: "Current User",
-        //     color: "#" + Math.floor(Math.random()*16777215).toString(16), // Random color for cursor
-        //   },
-        // },
-      });
+        collaboration: yDoc ? {
+            provider: {
+                // Custom provider interface for Socket.io
+                connect: () => {},
+                disconnect: () => {},
+                destroy: () => {}
+            },
+            fragment: yDoc.getXmlFragment("document-store"),
+            user: {
+                name: user?.displayName || user?.email || "Unknown User",
+                color: "#" + Math.floor(Math.random()*16777215).toString(16),
+            },
+        } : undefined,
+    });
     
     // Debounce inputs to trigger auto-save
     const debouncedTitle = useDebounce(title, 1500);
@@ -189,10 +202,31 @@ const Editor = () => {
                     </button>
                     
                     <div className="flex items-center space-x-4">
+                        {/* Connected Users Indicator */}
+                        <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {connectedUsers.length + 1} online
+                            </span>
+                        </div>
+
+                        {/* Collaboration Toggle */}
+                        <button
+                            onClick={() => setCollaborationPanelOpen(!isCollaborationPanelOpen)}
+                            className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                                isCollaborationPanelOpen
+                                    ? 'bg-[#D8C9AE] text-[#575757]'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                        >
+                            <MessageCircle className="h-4 w-4" />
+                            <span>Collaborate</span>
+                        </button>
+
                         {getStatusIndicator()}
 
                         {document?.role === 'admin' && (
-                            <button onClick={() => setShareModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+                            <button onClick={() => setShareModalOpen(true)} className="bg-[#575757] text-white px-4 py-2 rounded-lg hover:bg-[#404040] flex items-center space-x-2">
                                 <Share2 className="h-4 w-4" />
                                 <span>Share</span>
                             </button>
@@ -212,7 +246,7 @@ const Editor = () => {
                         />
                     </div>
                     
-                    <div className="p-6">
+                    <div className="p-6 relative">
                         <BlockNoteView
                             editor={editor}
                             editable={isEditable}
@@ -223,6 +257,13 @@ const Editor = () => {
                 </div>
             </div>
 
+            {/* Collaboration Panel */}
+            <CollaborationPanel
+                isOpen={isCollaborationPanelOpen}
+                onClose={() => setCollaborationPanelOpen(false)}
+            />
+
+            {/* Share Modal */}
             {document && <ShareModal isOpen={isShareModalOpen} onClose={() => setShareModalOpen(false)} document={document} />}
         </Layout>
     );

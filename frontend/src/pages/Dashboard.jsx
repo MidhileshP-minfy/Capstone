@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { documentApi } from '../services/api';
+import { documentApi } from '../services/simple-api';
 import { auth } from '../config/firebase';
 import { Plus, FileText, Calendar, Trash2, Edit, Shield, User, Eye, AlertTriangle } from 'lucide-react';
 import Layout from '../components/Layout';
