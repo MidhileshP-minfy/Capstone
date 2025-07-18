@@ -49,7 +49,7 @@ const Layout = ({ children }) => {
           </div>
         </div>
       </header>
-      <main className="dark:bg-secondary-900">{children}</main>
+      <main className="dark:bg-secondary-900 h-[calc(100vh-4rem)]">{children}</main>
     </div>
   );
 };

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import * as Y from "yjs";
+import { WebrtcProvider } from "y-webrtc";
 import { useParams, useNavigate } from 'react-router-dom';
 import { documentApi } from '../services/api';
 import { BlockNoteView } from "@blocknote/mantine";
@@ -11,6 +13,13 @@ import ShareModal from '../components/ShareModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { isEqual } from 'lodash';
+
+// Y.js setup for collaboration
+// const doc = new Y.Doc();
+// // Note: We're using the document ID from the URL params to create a unique room.
+// // This is a basic example. In a real app, you'd want a more robust way to manage room IDs.
+// const provider = new WebrtcProvider(`my-document-id-${window.location.pathname.split('/').pop()}`, doc);
+
 
 // Custom hook for debouncing
 const useDebounce = (value, delay) => {
@@ -42,7 +51,17 @@ const Editor = () => {
     const [isShareModalOpen, setShareModalOpen] = useState(false);
 
     // BlockNote Editor Instance
-    const editor = useCreateBlockNote();
+    const editor = useCreateBlockNote({
+        // collaboration: {
+        //   provider,
+        //   fragment: doc.getXmlFragment("document-store"),
+        //   user: {
+        //     // You would typically get the user's name from your auth context
+        //     name: "Current User",
+        //     color: "#" + Math.floor(Math.random()*16777215).toString(16), // Random color for cursor
+        //   },
+        // },
+      });
     
     // Debounce inputs to trigger auto-save
     const debouncedTitle = useDebounce(title, 1500);

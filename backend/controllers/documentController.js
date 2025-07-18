@@ -66,7 +66,7 @@ export const createDocument = async (req, res) => {
     
     const docData = {
       title: title || 'Untitled Document',
-      content: content || [{ type: "paragraph", content: "Start writing..." }],
+      content: content || [{ type: "paragraph", content: "Let's Gooooooooo" }],
       roles: {
         [userId]: 'admin',
       },
