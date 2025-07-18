@@ -60,4 +60,13 @@ export const documentApi = {
   delete: (id) => apiRequest(`/docs/${id}`, {
     method: 'DELETE',
   }),
+  getPermissions: (id) => apiRequest(`/docs/${id}/permissions`),
+  share: (id, email, role) => apiRequest(`/docs/${id}/share`, {
+    method: 'POST',
+    body: JSON.stringify({ email, role }),
+  }),
+  removeAccess: (id, userId) => apiRequest(`/docs/${id}/remove_access`, {
+      method: 'POST',
+      body: JSON.stringify({ userIdToRemove: userId }),
+  }),
 };

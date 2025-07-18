@@ -1,4 +1,4 @@
-import { db } from '../config/firebase.js';
+import { db, auth } from '../config/firebase.js';
 
 // Get all documents a user is a member of
 export const getAllDocuments = async (req, res) => {
@@ -6,7 +6,6 @@ export const getAllDocuments = async (req, res) => {
     const userId = req.user.uid;
     const docsRef = db.collection('docs');
     
-    // Query for documents where the user's ID is in the 'members' array
     const snapshot = await docsRef
       .where('members', 'array-contains', userId)
       .orderBy('updatedAt', 'desc')
@@ -43,7 +42,6 @@ export const getDocument = async (req, res) => {
 
     const data = doc.data();
     
-    // Check if user has any role in the document
     if (!data.roles?.[userId]) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -69,7 +67,6 @@ export const createDocument = async (req, res) => {
     const docData = {
       title: title || 'Untitled Document',
       content: content || [{ type: "paragraph", content: "Start writing..." }],
-      // Assign the creator as admin and add them to the members list
       roles: {
         [userId]: 'admin',
       },
@@ -96,7 +93,6 @@ export const updateDocument = async (req, res) => {
   try {
     const userId = req.user.uid;
     const docId = req.params.id;
-    // The request body can now contain title, content, or a new roles object
     const { title, content, roles } = req.body;
     
     const docRef = db.collection('docs').doc(docId);
@@ -109,7 +105,6 @@ export const updateDocument = async (req, res) => {
     const docData = doc.data();
     const userRole = docData.roles?.[userId];
 
-    // Deny access if user has no role
     if (!userRole) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -118,17 +113,14 @@ export const updateDocument = async (req, res) => {
       updatedAt: new Date(),
     };
     
-    // Only an admin can update the roles
     if (roles) {
       if (userRole !== 'admin') {
         return res.status(403).json({ error: 'Only admins can change roles.' });
       }
       updateData.roles = roles;
-      // Also update the members array to keep it in sync with the new roles
       updateData.members = Object.keys(roles);
     }
     
-    // Editors and Admins can update the title and content
     if (title !== undefined || content !== undefined) {
       if (userRole === 'viewer') {
         return res.status(403).json({ error: 'Viewers cannot edit the document.' });
@@ -159,7 +151,6 @@ export const deleteDocument = async (req, res) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Check if user is an admin for this document
     const userRole = doc.data().roles?.[userId];
     if (userRole !== 'admin') {
       return res.status(403).json({ error: 'Only admins can delete this document' });
@@ -172,4 +163,133 @@ export const deleteDocument = async (req, res) => {
     console.error('Error deleting document:', error);
     res.status(500).json({ error: 'Failed to delete document' });
   }
+};
+
+// Get all users and their roles for a document
+export const getPermissions = async (req, res) => {
+    try {
+      const docId = req.params.id;
+      const docRef = db.collection('docs').doc(docId);
+      const doc = await docRef.get();
+  
+      if (!doc.exists) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+  
+      const roles = doc.data().roles || {};
+      const userIds = Object.keys(roles);
+      
+      const userPromises = userIds.map(async (uid) => {
+        try {
+          const userRecord = await auth.getUser(uid);
+          return {
+              userId: uid,
+              email: userRecord.email,
+              name: userRecord.displayName || 'Unnamed User',
+              role: roles[uid]
+          };
+        } catch (error) {
+          console.error(`Could not fetch user data for UID: ${uid}`, error);
+          return null;
+        }
+      });
+  
+      const users = (await Promise.all(userPromises)).filter(Boolean);
+  
+      const owner = users.find(user => user.role === 'admin');
+      const permissions = users.filter(user => user.role !== 'admin');
+  
+      res.json({ owner, permissions });
+  
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      res.status(500).json({ error: 'Failed to fetch permissions' });
+    }
+};
+  
+// Share a document with another user
+export const shareDocument = async (req, res) => {
+    try {
+        const docId = req.params.id;
+        const { email, role } = req.body;
+        const currentUserId = req.user.uid;
+
+        const userToAdd = await auth.getUserByEmail(email);
+        if (!userToAdd) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const docRef = db.collection('docs').doc(docId);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        const docData = doc.data();
+        
+
+        // *** NEW: Check if user already has the same permission ***
+        const existingRole = docData.roles[userToAdd.uid];
+        if (existingRole && existingRole === role) {
+            return res.json({ message: "Dude already sent! Why do you need to do it again" });
+        }
+        // *** END NEW LOGIC ***
+
+        const newRoles = { ...docData.roles, [userToAdd.uid]: role };
+        const newMembers = Object.keys(newRoles);
+
+        await docRef.update({
+            roles: newRoles,
+            members: newMembers
+        });
+
+        const successMessage = existingRole
+            ? `Updated ${email}'s role to ${role}`
+            : `Document shared with ${email} as ${role}`;
+        
+        res.json({ message: successMessage });
+       
+    } catch (error) {
+        console.error('Error sharing document:', error);
+        res.status(500).json({ error: 'Failed to share document' });
+    }
+};
+
+// Remove a user's access to a document
+export const removeUserAccess = async (req, res) => {
+    try {
+        const docId = req.params.id;
+        const { userIdToRemove } = req.body;
+        const currentUserId = req.user.uid;
+
+        const docRef = db.collection('docs').doc(docId);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        
+        const docData = doc.data();
+        if (docData.roles[currentUserId] !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can remove users' });
+        }
+
+        if (docData.roles[userIdToRemove] === 'admin') {
+            return res.status(400).json({ error: 'Cannot remove the document owner' });
+        }
+
+        const newRoles = { ...docData.roles };
+        delete newRoles[userIdToRemove];
+        const newMembers = Object.keys(newRoles);
+
+        await docRef.update({
+            roles: newRoles,
+            members: newMembers
+        });
+
+        res.json({ message: 'User access removed successfully' });
+    } catch (error) {
+        console.error('Error removing user access:', error);
+        res.status(500).json({ error: 'Failed to remove user access' });
+    }
 };

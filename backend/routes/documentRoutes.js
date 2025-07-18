@@ -5,7 +5,10 @@ import {
   getDocument,
   createDocument,
   updateDocument,
-  deleteDocument
+  deleteDocument,
+  getPermissions,     // import this
+  shareDocument,      // import this
+  removeUserAccess    // import this
 } from '../controllers/documentController.js';
 
 const router = express.Router();
@@ -15,9 +18,16 @@ router.use(authenticateToken);
 
 // Document routes
 router.get('/', getAllDocuments);
-router.get('/:id', getDocument);
 router.post('/', createDocument);
+
+// Routes for a specific document
+router.get('/:id', getDocument);
 router.put('/:id', updateDocument);
 router.delete('/:id', deleteDocument);
+
+// Sharing routes
+router.get('/:id/permissions', getPermissions);
+router.post('/:id/share', shareDocument);
+router.post('/:id/remove_access', removeUserAccess); // Changed to post to have a body
 
 export default router;
