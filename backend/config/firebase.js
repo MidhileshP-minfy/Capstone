@@ -1,18 +1,11 @@
 import admin from 'firebase-admin';
-
-// Initialize Firebase Admin SDK
-const serviceAccount={
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-}
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const serviceAccount = require('./serviceAccount.json');
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: process.env.FIREBASE_PROJECT_ID,
-})
+  credential: admin.credential.cert(serviceAccount)
+});
 
 export const db = admin.firestore();
 export const auth = admin.auth();
-
-export default {admin}
