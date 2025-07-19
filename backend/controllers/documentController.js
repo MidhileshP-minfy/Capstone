@@ -67,6 +67,8 @@ export const createDocument = async (req, res) => {
     const docData = {
       title: title || 'Untitled Document',
       content: content || [{ type: "paragraph", content: "Let's Gooooooooo" }],
+      comments: [],
+      suggestions: [],
       roles: {
         [userId]: 'admin',
       },
@@ -93,7 +95,7 @@ export const updateDocument = async (req, res) => {
   try {
     const userId = req.user.uid;
     const docId = req.params.id;
-    const { title, content, roles } = req.body;
+    const { title, content, roles, comments, suggestions } = req.body;
     
     const docRef = db.collection('docs').doc(docId);
     const doc = await docRef.get();
@@ -113,6 +115,7 @@ export const updateDocument = async (req, res) => {
       updatedAt: new Date(),
     };
     
+    // Role updates are restricted to admins
     if (roles) {
       if (userRole !== 'admin') {
         return res.status(403).json({ error: 'Only admins can change roles.' });
@@ -121,6 +124,7 @@ export const updateDocument = async (req, res) => {
       updateData.members = Object.keys(roles);
     }
     
+    // Content/Title updates restricted to admins/editors
     if (title !== undefined || content !== undefined) {
       if (userRole === 'viewer') {
         return res.status(403).json({ error: 'Viewers cannot edit the document.' });
@@ -128,6 +132,15 @@ export const updateDocument = async (req, res) => {
       if (title !== undefined) updateData.title = title;
       if (content !== undefined) updateData.content = content;
     }
+    
+    // Comments/Suggestions can be updated by any member
+    if (comments !== undefined) {
+        updateData.comments = comments;
+    }
+    if (suggestions !== undefined) {
+        updateData.suggestions = suggestions;
+    }
+
 
     await docRef.update(updateData);
 
@@ -227,13 +240,10 @@ export const shareDocument = async (req, res) => {
 
         const docData = doc.data();
         
-
-        // *** NEW: Check if user already has the same permission ***
         const existingRole = docData.roles[userToAdd.uid];
         if (existingRole && existingRole === role) {
-            return res.json({ message: "Dude already sent! Why do you need to do it again" });
+            return res.json({ message: "User already has this role." });
         }
-        // *** END NEW LOGIC ***
 
         const newRoles = { ...docData.roles, [userToAdd.uid]: role };
         const newMembers = Object.keys(newRoles);

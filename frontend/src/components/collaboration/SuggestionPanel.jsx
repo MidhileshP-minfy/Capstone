@@ -1,118 +1,140 @@
-import React from 'react';
-import { Edit3, X, Check, Clock, User } from 'lucide-react';
-import { useCollaboration } from './CollaborationProvider';
+import React, { useState } from 'react';
+import { Lightbulb, CheckCircle, X, ArrowRight, Sparkles } from 'lucide-react';
 
-const SuggestionPanel = ({ isOpen, onClose }) => {
-  const { suggestions, acceptSuggestion, rejectSuggestion } = useCollaboration();
+const SuggestionPanel = ({ suggestions, onApplySuggestion, onDismissSuggestion }) => {
+  const [expandedSuggestion, setExpandedSuggestion] = useState(null);
 
-  const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
-  };
-
-  const getSuggestionTypeColor = (type) => {
+  const getSuggestionIcon = (type) => {
     switch (type) {
-      case 'insert': return 'text-green-600 dark:text-green-400';
-      case 'delete': return 'text-red-600 dark:text-red-400';
-      case 'replace': return 'text-blue-600 dark:text-blue-400';
-      default: return 'text-secondary-600 dark:text-primary-300';
+      case 'accessibility':
+        return '♿';
+      case 'performance':
+        return '⚡';
+      case 'design':
+        return '🎨';
+      case 'ux':
+        return '👤';
+      default:
+        return '💡';
     }
   };
 
-  const getSuggestionTypeLabel = (type) => {
-    switch (type) {
-      case 'insert': return 'Insert';
-      case 'delete': return 'Delete';
-      case 'replace': return 'Replace';
-      default: return 'Edit';
+  const getSuggestionColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'border-red-500/30 bg-red-500/10';
+      case 'medium':
+        return 'border-yellow-500/30 bg-yellow-500/10';
+      case 'low':
+        return 'border-blue-500/30 bg-blue-500/10';
+      default:
+        return 'border-primary-200 dark:border-secondary-700 bg-primary-50 dark:bg-secondary-800/50';
     }
   };
-
-  if (!isOpen) return null;
-
-  const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
 
   return (
-    <div className="fixed right-0 top-0 h-full w-80 bg-white dark:bg-secondary-800 border-l border-primary-200 dark:border-secondary-700 shadow-lg z-50">
-      <div className="flex items-center justify-between p-4 border-b border-primary-200 dark:border-secondary-700">
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white flex items-center">
-          <Edit3 className="h-5 w-5 mr-2" />
-          Suggestions ({pendingSuggestions.length})
-        </h3>
-        <button
-          onClick={onClose}
-          className="text-secondary-500 hover:text-secondary-700 dark:text-secondary-400 dark:hover:text-secondary-200"
-        >
-          <X className="h-5 w-5" />
-        </button>
+    <div className="w-80 bg-white dark:bg-secondary-900 border-l border-primary-200 dark:border-secondary-700 h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-primary-100 dark:border-secondary-700 bg-primary-50 dark:bg-secondary-800">
+        <div className="flex items-center space-x-2">
+          <Sparkles className="w-5 h-5 text-secondary-600 dark:text-primary-300" />
+          <h3 className="font-semibold text-secondary-800 dark:text-white">Smart Suggestions</h3>
+          {suggestions.length > 0 && (
+            <span className="bg-primary-200 dark:bg-secondary-700 text-secondary-700 dark:text-primary-300 text-xs px-2 py-1 rounded-full">
+              {suggestions.length}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
+          AI-powered recommendations to improve your design
+        </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-full">
-        {pendingSuggestions.map((suggestion) => (
-          <div
-            key={suggestion.id}
-            className="p-3 rounded-lg border bg-primary-50 dark:bg-secondary-700 border-primary-200 dark:border-secondary-600"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-secondary-400 flex items-center justify-center text-xs font-medium text-white">
-                  <User className="h-3 w-3" />
+      {/* Suggestions List */}
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+        {suggestions.length === 0 ? (
+          <div className="text-center py-8">
+            <Lightbulb className="w-12 h-12 mx-auto text-primary-300 dark:text-secondary-600 mb-3" />
+            <p className="text-secondary-500 dark:text-secondary-400 text-sm">No suggestions available</p>
+            <p className="text-secondary-400 dark:text-secondary-500 text-xs mt-1">
+              Keep designing and we'll provide helpful tips!
+            </p>
+          </div>
+        ) : (
+          suggestions.map((suggestion) => (
+            <div
+              key={suggestion.id}
+              className={`border rounded-lg p-4 transition-all duration-200 text-white ${getSuggestionColor(suggestion.priority)}`}
+            >
+              {/* Suggestion Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start space-x-3">
+                  <span className="text-lg">{getSuggestionIcon(suggestion.type)}</span>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-secondary-800 dark:text-white text-sm">
+                      {suggestion.title}
+                    </h4>
+                    <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1 capitalize">
+                      {suggestion.category} • {suggestion.priority} priority
+                    </p>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-secondary-900 dark:text-white">
-                  {suggestion.userName}
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full bg-white dark:bg-secondary-800 ${getSuggestionTypeColor(suggestion.type)}`}>
-                  {getSuggestionTypeLabel(suggestion.type)}
-                </span>
+                <button
+                  onClick={() => onDismissSuggestion(suggestion.id)}
+                  className="text-secondary-400 hover:text-secondary-600 dark:hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <span className="text-xs text-secondary-500 dark:text-primary-300 flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
-                {formatTimestamp(suggestion.timestamp)}
-              </span>
-            </div>
 
-            <div className="space-y-2 mb-3">
-              {suggestion.originalContent && (
-                <div className="text-sm">
-                  <span className="text-red-600 dark:text-red-400 font-medium">Original: </span>
-                  <span className="line-through text-secondary-600 dark:text-primary-300">
-                    {suggestion.originalContent}
-                  </span>
+              {/* Suggestion Description */}
+              <p className="text-sm text-secondary-700 dark:text-secondary-300 mb-3">
+                {suggestion.description}
+              </p>
+
+              {/* Expandable Details */}
+              {suggestion.details && (
+                <div className="mb-3">
+                  <button
+                    onClick={() => setExpandedSuggestion(
+                      expandedSuggestion === suggestion.id ? null : suggestion.id
+                    )}
+                    className="text-xs text-blue-500 hover:text-blue-400 flex items-center space-x-1"
+                  >
+                    <span>View details</span>
+                    <ArrowRight
+                      className={`w-3 h-3 transition-transform ${
+                        expandedSuggestion === suggestion.id ? 'rotate-90' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {expandedSuggestion === suggestion.id && (
+                    <div className="mt-2 p-3 bg-white dark:bg-secondary-800 rounded border border-primary-200 dark:border-secondary-700 text-xs text-secondary-600 dark:text-secondary-300">
+                      {suggestion.details}
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="text-sm">
-                <span className="text-green-600 dark:text-green-400 font-medium">
-                  {suggestion.type === 'delete' ? 'Delete' : 'Suggested'}: 
-                </span>
-                <span className="text-secondary-700 dark:text-primary-200 ml-1">
-                  {suggestion.content}
-                </span>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => onApplySuggestion(suggestion)}
+                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                >
+                  <CheckCircle className="w-3 h-3" />
+                  <span>Apply</span>
+                </button>
+                <button
+                  onClick={() => onDismissSuggestion(suggestion.id)}
+                  className="px-3 py-2 border border-primary-300 dark:border-secondary-600 text-secondary-600 dark:text-secondary-300 rounded text-xs hover:bg-primary-50 dark:hover:bg-secondary-700 transition-colors"
+                >
+                  Dismiss
+                </button>
               </div>
             </div>
-
-            <div className="flex space-x-2">
-              <button
-                onClick={() => acceptSuggestion(suggestion.id)}
-                className="flex-1 bg-green-600 text-white py-1 px-3 rounded text-sm hover:bg-green-700 transition-colors flex items-center justify-center"
-              >
-                <Check className="h-3 w-3 mr-1" />
-                Accept
-              </button>
-              <button
-                onClick={() => rejectSuggestion(suggestion.id)}
-                className="flex-1 bg-red-600 text-white py-1 px-3 rounded text-sm hover:bg-red-700 transition-colors flex items-center justify-center"
-              >
-                <X className="h-3 w-3 mr-1" />
-                Reject
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {pendingSuggestions.length === 0 && (
-          <div className="text-center py-8">
-            <Edit3 className="h-12 w-12 text-secondary-400 dark:text-secondary-500 mx-auto mb-4" />
-            <p className="text-secondary-600 dark:text-primary-300">No pending suggestions</p>
-          </div>
+          ))
         )}
       </div>
     </div>
