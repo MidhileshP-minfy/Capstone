@@ -18,8 +18,10 @@ const io = new SocketIOServer(httpServer, {
 // Track users in rooms
 const documentUsers = {};
 
-// In-memory comment storage per document
+// In-memory storage per document
 const documentComments = {};
+const documentSuggestions = {};
+const documentHighlights = {};
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -54,9 +56,61 @@ io.on('connection', (socket) => {
     io.to(docId).emit('new-comment', comment);
   });
 
-  // Optionally, send all comments to a user when they join
+  socket.on('resolve-comment', ({ docId, commentId }) => {
+    if (documentComments[docId]) {
+      const comment = documentComments[docId].find(c => c.id === commentId);
+      if (comment) {
+        comment.resolved = true;
+        io.to(docId).emit('comment-resolved', { commentId, comment });
+      }
+    }
+  });
+
+  // Handle suggestions
+  socket.on('add-suggestion', ({ docId, suggestion }) => {
+    if (!documentSuggestions[docId]) documentSuggestions[docId] = [];
+    documentSuggestions[docId].push(suggestion);
+    io.to(docId).emit('new-suggestion', suggestion);
+  });
+
+  socket.on('accept-suggestion', ({ docId, suggestionId }) => {
+    if (documentSuggestions[docId]) {
+      const suggestion = documentSuggestions[docId].find(s => s.id === suggestionId);
+      if (suggestion) {
+        suggestion.status = 'accepted';
+        io.to(docId).emit('suggestion-accepted', { suggestionId, suggestion });
+      }
+    }
+  });
+
+  socket.on('reject-suggestion', ({ docId, suggestionId }) => {
+    if (documentSuggestions[docId]) {
+      const suggestion = documentSuggestions[docId].find(s => s.id === suggestionId);
+      if (suggestion) {
+        suggestion.status = 'rejected';
+        io.to(docId).emit('suggestion-rejected', { suggestionId, suggestion });
+      }
+    }
+  });
+
+  // Handle highlights
+  socket.on('add-highlight', ({ docId, highlight }) => {
+    if (!documentHighlights[docId]) documentHighlights[docId] = [];
+    documentHighlights[docId].push(highlight);
+    io.to(docId).emit('new-highlight', highlight);
+  });
+
+  // Send existing data to users when they join
   socket.on('get-comments', (docId, callback) => {
     callback(documentComments[docId] || []);
+  });
+
+  socket.on('get-suggestions', (docId, callback) => {
+    callback(documentSuggestions[docId] || []);
+  });
+
+  socket.on('get-highlights', (docId, callback) => {
+    callback(documentHighlights[docId] || []);
   });
 
   socket.on('disconnect', () => {

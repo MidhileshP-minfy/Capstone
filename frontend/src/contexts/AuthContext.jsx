@@ -3,7 +3,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  updateProfile
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -35,13 +36,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userName, email, password) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     await updateProfile(userCredential.user, {
-          displayName: userName
+      displayName: userName
     });
-        
-        // Update the local user state to include the display name
+    
+    // Update the local user state to include the display name
     setUser({
       ...userCredential.user,
       displayName: userName
