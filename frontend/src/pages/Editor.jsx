@@ -79,6 +79,7 @@ const Editor = () => {
     <YDocProvider
       docId={id}
       authEndpoint="https://demos.y-sweet.dev/api/auth"
+      showDebuggerLink={false}
     >
       <Document />
     </YDocProvider>
@@ -93,7 +94,7 @@ function Document() {
 
   // Core State
   const [document, setDocument] = useState(null);
-  const [documentUsers, setDocumentUsers] = useState([]);
+  const [activeUsers, setActiveUsers] = useState([]); // New state for active users
   const [activeUser, setActiveUser] = useState(null);
   const [title, setTitle] = useState('');
   const [isEditable, setIsEditable] = useState(false);
@@ -117,6 +118,38 @@ function Document() {
 
   // Debounce title to trigger auto-save
   const debouncedTitle = useDebounce(title, 1500);
+
+  // Track active users using Y-Sweet's awareness
+  // Fixed Track active users using Y-Sweet's awareness
+useEffect(() => {
+  if (!provider || !user) return;
+
+  const awareness = provider.awareness;
+  
+  // Set current user's awareness state
+  awareness.setLocalStateField('user', {
+    id: user.uid,
+    name: user.displayName || user.email || `User ${user.uid?.slice(-4) || 'Unknown'}`,
+    email: user.email,
+    avatarUrl: user.photoURL || '',
+    color: generateUserColor(user.uid)
+  });
+
+  // Listen for awareness changes
+  const handleAwarenessChange = () => {
+    const states = Array.from(awareness.getStates().values());
+    setActiveUsers(states);
+  };
+
+  awareness.on('change', handleAwarenessChange);
+  
+  // Initial call
+  handleAwarenessChange();
+
+  return () => {
+    awareness.off('change', handleAwarenessChange);
+  };
+}, [provider, user]);
 
   // Load document and users
   useEffect(() => {
@@ -186,8 +219,6 @@ function Document() {
               }
             })
           );
-          
-          setDocumentUsers(usersData);
 
           const currentUser = usersData.find(u => u.id === user.uid) || {
             id: user.uid,
@@ -354,32 +385,42 @@ function Document() {
                 </button>
 
                 <div className="flex items-center space-x-4">
-                  {/* Active Users Display */}
-                  {documentUsers.length > 1 && (
-                    <div className="flex items-center space-x-2 bg-white dark:bg-secondary-800 rounded-lg px-3 py-2 shadow-sm border border-primary-200 dark:border-secondary-700">
-                      <Users className="h-4 w-4 text-secondary-600 dark:text-primary-300" />
-                      <span className="text-sm text-secondary-600 dark:text-primary-300">
-                        {documentUsers.length} users
-                      </span>
-                      <div className="flex -space-x-2">
-                        {documentUsers.slice(0, 3).map((docUser) => (
-                          <div
-                            key={docUser.id}
-                            className="w-8 h-8 rounded-full border-2 border-white dark:border-secondary-800 flex items-center justify-center text-xs font-medium text-white"
-                            style={{ backgroundColor: generateUserColor(docUser.id) }}
-                            title={docUser.name}
-                          >
-                            {docUser.name.charAt(0).toUpperCase()}
-                          </div>
-                        ))}
-                        {documentUsers.length > 3 && (
-                          <div className="w-8 h-8 rounded-full border-2 border-white dark:border-secondary-800 bg-secondary-400 flex items-center justify-center text-xs font-medium text-white">
-                            +{documentUsers.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  {/* Active Users Display - Now shows real active users */}
+                  {activeUsers.length > 0 && (
+  <div className="flex items-center space-x-2 bg-white dark:bg-secondary-800 rounded-lg px-3 py-2 shadow-sm border border-primary-200 dark:border-secondary-700">
+    <Users className="h-4 w-4 text-secondary-600 dark:text-primary-300" />
+    <span className="text-sm text-secondary-600 dark:text-primary-300">
+      {activeUsers.length} active
+    </span>
+    <div className="flex -space-x-2">
+      {activeUsers.slice(0, 3).map((activeUser, index) => {
+        const user = activeUser.user || {};
+        const name = user.name || 'User';
+        const color = user.color || '#888';
+        const id = user.id || index; // Fallback key
+
+        return (
+          <div
+            key={id}
+            className="w-8 h-8 rounded-full border-2 border-white dark:border-secondary-800 flex items-center justify-center text-xs font-medium text-white"
+            style={{ backgroundColor: color }}
+            title={name}
+          >
+            {name.charAt(0).toUpperCase()}
+          </div>
+        );
+      })}
+      {activeUsers.length > 3 && (
+        <div className="w-8 h-8 rounded-full border-2 border-white dark:border-secondary-800 bg-secondary-400 flex items-center justify-center text-xs font-medium text-white">
+          +{activeUsers.length - 3}
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
+
+
 
                   {getStatusIndicator()}
 

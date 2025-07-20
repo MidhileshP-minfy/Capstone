@@ -4,11 +4,11 @@ import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCbosS3nNIeVB2Ao77PxGPfW0Nf4fvr6Bg",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  authDomain: "docc-trial.firebaseapp.com",
+  projectId: "docc-trial",
+  storageBucket: "docc-trial.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:0987654321"
 };
 
 const app = initializeApp(firebaseConfig);
