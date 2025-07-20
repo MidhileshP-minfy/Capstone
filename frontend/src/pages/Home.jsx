@@ -24,7 +24,7 @@ const features = [
   },
 ];
 
-const LandingPage = () => {
+const Home = () => {
   const navigate = useNavigate();
 
   return (
@@ -119,4 +119,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default Home;
