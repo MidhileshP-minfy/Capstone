@@ -8,7 +8,8 @@ import {
   deleteDocument,
   getPermissions,     // import this
   shareDocument,      // import this
-  removeUserAccess    // import this
+  removeUserAccess,   // import this
+  getUserDetails      // import this new one
 } from '../controllers/documentController.js';
 
 const router = express.Router();
@@ -29,5 +30,6 @@ router.delete('/:id', deleteDocument);
 router.get('/:id/permissions', getPermissions);
 router.post('/:id/share', shareDocument);
 router.post('/:id/remove_access', removeUserAccess); // Changed to post to have a body
+router.post('/users/details', getUserDetails); // New route for getting user details
 
 export default router;
