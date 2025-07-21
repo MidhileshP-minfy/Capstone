@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit3, ArrowRight, MessageCircle, Lightbulb, Users } from "lucide-react";
+import { Edit3, ArrowRight, MessageCircle, Brain, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 
@@ -11,9 +11,9 @@ const features = [
     bg: "bg-primary-700 dark:bg-primary-800",
   },
   {
-    icon: <Lightbulb className="w-6 h-6 text-white" />,
-    title: "Suggestions",
-    desc: "Propose edits; accept or reject as a team.",
+    icon: <Brain className="w-6 h-6 text-white" />,
+    title: "Ask AI",
+    desc: "Need Anything else? Ask our AI assistant.",
     bg: "bg-blue-600 dark:bg-blue-700",
   },
   {
@@ -91,11 +91,11 @@ const Home = () => {
               <div className="text-2xl font-bold text-primary-900 dark:text-white">Your doc, live.</div>
               <div className="flex items-center gap-2 mt-3">
                 <MessageCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                <Lightbulb className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <Brain className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 <Users className="w-4 h-4 text-secondary-700 dark:text-secondary-400" />
               </div>
               <div className="text-xs text-primary-400 dark:text-primary-200 mt-3">
-                Real-time collaboration | Comments | Suggestions
+                Real-time collaboration | Comments | Ask AI
               </div>
             </div>
           </div>
