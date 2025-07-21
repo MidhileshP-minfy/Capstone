@@ -6,10 +6,10 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
-  getPermissions,     // import this
-  shareDocument,      // import this
-  removeUserAccess,   // import this
-  getUserDetails      // import this new one
+  getPermissions,
+  shareDocument,
+  removeUserAccess,
+  getUserDetails
 } from '../controllers/documentController.js';
 
 const router = express.Router();

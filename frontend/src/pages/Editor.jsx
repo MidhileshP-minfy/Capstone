@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { auth } from '../config/firebase';
 import { documentApi } from '../services/api';
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
@@ -43,15 +42,7 @@ const Mention = createReactInlineContentSpec(
   },
   {
     render: (props) => (
-      <span 
-        style={{ 
-          backgroundColor: "#3b82f633", 
-          color: "#3b82f6",
-          padding: "2px 4px",
-          borderRadius: "4px",
-          fontWeight: "500"
-        }}
-      >
+      <span className="bg-[#3b82f633] text-[#3b82f6] px-1 py-0.5 rounded font-medium">
         @{props.inlineContent.props.user}
       </span>
     ),
@@ -93,8 +84,7 @@ const resolveUsersFromBackend = async (userIds) => {
     return userIds.map(userId => ({
       id: userId,
       name: `User ${userId.slice(-4)}`,
-      email: '',
-      avatarUrl: '',
+      email: ''
     }));
   }
 };
@@ -172,8 +162,7 @@ function Document() {
     return userIds.map(id => userCache.get(id) || {
       id,
       name: `User ${id.slice(-4)}`,
-      email: '',
-      avatarUrl: '',
+      email: ''
     });
   }, [userCache]);
 
@@ -211,7 +200,6 @@ function Document() {
       id: user.uid,
       name: user.displayName || user.email?.split('@')[0] || `User ${user.uid.slice(-4)}`,
       email: user.email,
-      avatarUrl: user.photoURL || '',
       color: generateUserColor(user.uid)
     });
 
@@ -270,8 +258,7 @@ function Document() {
             const currentUserData = resolvedUsers.find(u => u.id === user.uid) || {
               id: user.uid,
               name: user.displayName || user.email?.split('@')[0] || `User ${user.uid.slice(-4)}`,
-              email: user.email || '',
-              avatarUrl: user.photoURL || '',
+              email: user.email || ''
             };
             
             setActiveUser({ ...currentUserData, role: userRole || 'viewer' });
@@ -280,8 +267,7 @@ function Document() {
             const currentUserData = {
               id: user.uid,
               name: user.displayName || user.email?.split('@')[0] || `User ${user.uid.slice(-4)}`,
-              email: user.email || '',
-              avatarUrl: user.photoURL || '',
+              email: user.email || ''
             };
             
             setDocumentUsers([currentUserData]);

@@ -192,15 +192,13 @@ export const getUserDetails = async (req, res) => {
           id: uid,
           name: userRecord.displayName || userRecord.email?.split('@')[0] || `User ${uid.slice(-4)}`,
           email: userRecord.email || '',
-          avatarUrl: userRecord.photoURL || '',
         };
       } catch (error) {
         console.error(`Could not fetch user data for UID: ${uid}`, error);
         return {
           id: uid,
           name: `User ${uid.slice(-4)}`,
-          email: '',
-          avatarUrl: '',
+          email: ''
         };
       }
     });
@@ -261,7 +259,6 @@ export const shareDocument = async (req, res) => {
     try {
         const docId = req.params.id;
         const { email, role } = req.body;
-        const currentUserId = req.user.uid;
 
         const userToAdd = await auth.getUserByEmail(email);
         if (!userToAdd) {
@@ -278,7 +275,7 @@ export const shareDocument = async (req, res) => {
         
         const existingRole = docData.roles[userToAdd.uid];
         if (existingRole && existingRole === role) {
-            return res.json({ message: "User already has this role." });
+            return res.json({ message: "Dude Don't do the same thing...User already has this role." });
         }
 
         const newRoles = { ...docData.roles, [userToAdd.uid]: role };

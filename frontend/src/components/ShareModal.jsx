@@ -76,7 +76,7 @@ const ShareModal = ({ isOpen, onClose, document }) => {
     switch (role) {
       case 'owner': return <Crown className="h-4 w-4 text-yellow-500" />;
       case 'admin': return <Shield className="h-4 w-4 text-red-500" />;
-      case 'editor': return <Edit className="h-4 w-4 text-blue-500" />; // Changed for clarity
+      case 'editor': return <Edit className="h-4 w-4 text-blue-500" />;
       case 'viewer': return <Eye className="h-4 w-4 text-gray-500" />;
       default: return null;
     }
