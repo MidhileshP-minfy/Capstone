@@ -1,96 +1,136 @@
 # DocSpace - Setup Guide
 
-This guide will walk you through setting up the DocSpace application for local development.
+This guide will walk you through setting up the DocSpace application for local development, covering both the backend and frontend services.
 
 ## 1. Prerequisites
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js**: v16 or higher
-- **Bun**: latest version
+- **Node.js** (v16 or higher)
+- **Bun** (latest version)
 - **Git**
 
-## 2. Firebase Setup
-
-### Create a Firebase Project
-
-1.  Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
-2.  Enable **Email/Password** authentication in the **Authentication > Sign-in method** tab.
-3.  Create a **Firestore Database** in test mode. We'll add security rules later.
-
-### Get Firebase Credentials
-
-1.  In your Firebase project, go to **Project Settings** > **General**.
-2.  Under "Your apps", click the web icon (`</>`) to create a new web app.
-3.  Copy the `firebaseConfig` object. You'll need this for the frontend.
-
-## 3. Project Installation
-
-### Clone the Repository
+## 2. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd DocSpace
 ```
 
-### Install Dependencies
+## 3. Backend Setup (Express.js)
+
+### 3.1. Install Dependencies
+
+Navigate to the backend directory and install the required packages.
 
 ```bash
-# Install frontend dependencies
-cd frontend && bun install
-
-# Install backend dependencies
-cd ../backend && bun install
+cd backend
+bun install
 ```
 
-## 4. Environment Configuration
+### 3.2. Configure Firebase Admin
 
-### Frontend
+The backend uses the Firebase Admin SDK and requires a service account key.
 
-Create a `firebaseConfig.json` file in `frontend/src/config/` and paste the `firebaseConfig` object you copied from the Firebase console:
-
-```json
-{
-  "apiKey": "YOUR_API_KEY",
-  "authDomain": "YOUR_AUTH_DOMAIN",
-  "projectId": "YOUR_PROJECT_ID",
-  "storageBucket": "YOUR_STORAGE_BUCKET",
-  "messagingSenderId": "YOUR_MESSAGING_SENDER_ID",
-  "appId": "YOUR_APP_ID"
-}
-```
-
-### Backend
-
-The backend uses the Firebase Admin SDK and requires a service account.
-
-1.  In your Firebase project, go to **Project Settings** > **Service accounts**.
+1.  In your Firebase project, go to **Project Settings > Service accounts**.
 2.  Click **Generate new private key** to download a service account JSON file.
-3.  **Do not commit this file to Git.**
+3.  Place the downloaded file in the `backend/config/` directory and rename it to `serviceAccount.json`.
 
-## 5. Running the Application
+> **Security Note:** This file is gitignored for security. **Never commit it to version control.**
 
-### Start the Backend
+### 3.3. Configure Environment Variables (Optional)
+
+The backend uses a `.env` file for environment variables.
+
+1.  Create a `.env` file in the `backend/` directory.
+2.  You can specify the server port (it defaults to 5000 if not set):
+
+    ```env
+    # backend/.env
+    PORT=5000
+    ```
+
+### 3.4. Run the Server
+
+From the `backend/` directory, start the server:
 
 ```bash
-# From the backend/ directory
 bun start
 ```
 
-The backend will be available at `http://localhost:5000`.
+The backend API will be available at `http://localhost:5000`.
 
-### Start the Frontend
+### 3.5. Run Backend Tests
+
+To run the backend tests (using Jest and Supertest), run the following command from the `backend/` directory:
 
 ```bash
-# From the frontend/ directory
+bun test
+```
+
+## 4. Frontend Setup (React)
+
+### 4.1. Install Dependencies
+
+Navigate to the frontend directory and install the required packages.
+
+```bash
+cd ../frontend
+bun install
+```
+
+### 4.2. Configure Firebase
+
+The frontend requires your Firebase project's configuration.
+
+1.  In your Firebase project, go to **Project Settings > General**.
+2.  Under "Your apps," click the web icon (`</>`) to find your web app's configuration.
+3.  Create a file named `firebaseConfig.json` in `frontend/src/config/`.
+4.  Paste the `firebaseConfig` object into the file:
+
+    ```json
+    {
+      "apiKey": "YOUR_API_KEY",
+      "authDomain": "YOUR_AUTH_DOMAIN",
+      "projectId": "YOUR_PROJECT_ID",
+      "storageBucket": "YOUR_STORAGE_BUCKET",
+      "messagingSenderId": "YOUR_MESSAGING_SENDER_ID",
+      "appId": "YOUR_APP_ID"
+    }
+    ```
+
+### 4.3. Configure AI API Key (Groq)
+
+The editor uses AI features powered by Groq.
+
+1.  Create a file named `getEnv.js` in `frontend/src/pages/`.
+2.  Add the following code, replacing the placeholder with your own API key:
+
+    ```javascript
+    // frontend/src/pages/getEnv.js
+    export function getEnv(key) {
+      const env = {
+        GROQ_API_KEY: "your_groq_api_key_here", // Replace with your Groq API key
+      };
+      return env[key];
+    }
+    ```
+
+> **Note:** You can get a free API key from the [Groq Console](https://console.groq.com/). If no key is provided, AI features will be disabled.
+
+### 4.4. Run the Application
+
+From the `frontend/` directory, start the development server:
+
+```bash
 bun dev
 ```
 
 The frontend will be available at `http://localhost:5173`.
 
-## 6. Firestore Security Rules
+## 5. Firestore Security Rules
 
-For production, it's important to secure your Firestore database. Here are some basic security rules to get you started:
+For production, it's critical to secure your Firestore database. Here are some basic rules to get you started:
 
 ```
 rules_version = '2';
@@ -104,4 +144,4 @@ service cloud.firestore {
 }
 ```
 
-These rules ensure that only authenticated users can create documents and that only members of a document can read or write to it.
+These rules ensure only authenticated users can create documents and only members can read or write to them.
