@@ -69,4 +69,8 @@ export const documentApi = {
       method: 'POST',
       body: JSON.stringify({ userIdToRemove: userId }),
   }),
+  getUserDetails: (userIds) => apiRequest('/docs/users/details', {
+    method: 'POST',
+    body: JSON.stringify({ userIds }),
+  }),
 };

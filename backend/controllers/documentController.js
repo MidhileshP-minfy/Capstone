@@ -66,7 +66,6 @@ export const createDocument = async (req, res) => {
     
     const docData = {
       title: title || 'Untitled Document',
-      content: content || [{ type: "paragraph", content: "Let's Gooooooooo" }],
       comments: [],
       suggestions: [],
       roles: {
@@ -141,7 +140,6 @@ export const updateDocument = async (req, res) => {
         updateData.suggestions = suggestions;
     }
 
-
     await docRef.update(updateData);
 
     res.json({ message: 'Document updated successfully' });
@@ -175,6 +173,42 @@ export const deleteDocument = async (req, res) => {
   } catch (error) {
     console.error('Error deleting document:', error);
     res.status(500).json({ error: 'Failed to delete document' });
+  }
+};
+
+// Get user details for mentions (new endpoint)
+export const getUserDetails = async (req, res) => {
+  try {
+    const { userIds } = req.body;
+    
+    if (!userIds || !Array.isArray(userIds)) {
+      return res.status(400).json({ error: 'userIds array is required' });
+    }
+
+    const userPromises = userIds.map(async (uid) => {
+      try {
+        const userRecord = await auth.getUser(uid);
+        return {
+          id: uid,
+          name: userRecord.displayName || userRecord.email?.split('@')[0] || `User ${uid.slice(-4)}`,
+          email: userRecord.email || '',
+        };
+      } catch (error) {
+        console.error(`Could not fetch user data for UID: ${uid}`, error);
+        return {
+          id: uid,
+          name: `User ${uid.slice(-4)}`,
+          email: ''
+        };
+      }
+    });
+
+    const users = await Promise.all(userPromises);
+    res.json(users);
+
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ error: 'Failed to fetch user details' });
   }
 };
 
@@ -225,7 +259,6 @@ export const shareDocument = async (req, res) => {
     try {
         const docId = req.params.id;
         const { email, role } = req.body;
-        const currentUserId = req.user.uid;
 
         const userToAdd = await auth.getUserByEmail(email);
         if (!userToAdd) {
@@ -242,7 +275,7 @@ export const shareDocument = async (req, res) => {
         
         const existingRole = docData.roles[userToAdd.uid];
         if (existingRole && existingRole === role) {
-            return res.json({ message: "User already has this role." });
+            return res.json({ message: "Dude Don't do the same thing...User already has this role." });
         }
 
         const newRoles = { ...docData.roles, [userToAdd.uid]: role };

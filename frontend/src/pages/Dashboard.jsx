@@ -4,6 +4,7 @@ import { documentApi } from '../services/api';
 import { auth } from '../config/firebase';
 import { Plus, FileText, Calendar, Trash2, Edit, Shield, User, Eye, AlertTriangle } from 'lucide-react';
 import Layout from '../components/Layout';
+import { useDocument } from '../contexts/DocumentContext';
 
 const Dashboard = () => {
   const [documents, setDocuments] = useState([]);
@@ -12,6 +13,7 @@ const Dashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [docToDelete, setDocToDelete] = useState(null); // For confirmation state
   const navigate = useNavigate();
+  const { setActiveDocumentId } = useDocument();
 
   useEffect(() => {
     // Set up an observer to get the current user
@@ -46,11 +48,17 @@ const Dashboard = () => {
   const handleCreateDocument = async () => {
     try {
       const newDoc = await documentApi.create({ title: 'Untitled Document' });
-      navigate(`/editor/${newDoc.id}`);
+      setActiveDocumentId(newDoc.id);
+      navigate(`/editor`);
     } catch (error) {
       setError(error.message || 'Failed to create document');
       console.error('Error creating document:', error);
     }
+  };
+
+  const handleOpenDocument = (docId) => {
+    setActiveDocumentId(docId);
+    navigate('/editor');
   };
 
   const handleDeleteDocument = async () => {
@@ -164,15 +172,10 @@ const Dashboard = () => {
                 <div key={doc.id} className="bg-white dark:bg-secondary-800 rounded-lg shadow-md border border-primary-200 dark:border-secondary-700 flex flex-col">
                   <div className="p-6 flex-grow">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-secondary-900 dark:text-white truncate pr-2 flex-1 cursor-pointer" onClick={() => navigate(`/editor/${doc.id}`)}>
+                      <h3 className="text-lg font-semibold text-secondary-900 dark:text-white truncate pr-2 flex-1 cursor-pointer" onClick={() => handleOpenDocument(doc.id)}>
                         {doc.title}
                       </h3>
                       <div className="flex items-center space-x-2 flex-shrink-0">
-                        {/* {canEdit && (
-                          <button onClick={() => navigate(`/editor/${doc.id}`)} className="text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-primary-300 transition-colors" title="Edit document">
-                            <Edit className="h-4 w-4" />
-                          </button>
-                        )} */}
                         {canDelete && (
                            <button onClick={() => setDocToDelete(doc)} className="text-secondary-500 dark:text-secondary-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Delete document">
                             <Trash2 className="h-4 w-4" />

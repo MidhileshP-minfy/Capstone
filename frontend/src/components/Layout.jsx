@@ -19,7 +19,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-primary-50 dark:bg-secondary-900 transition-colors">
-      <header className="bg-white dark:bg-secondary-800 shadow-sm border-b border-primary-200 dark:border-secondary-700">
+      <header className="bg-primary-50 dark:bg-secondary-800 shadow-sm border-b border-primary-200 dark:border-secondary-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
